@@ -1,0 +1,28 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Viewer</title>
+    <script>
+        async function fetchData() {
+            const response = await fetch("http://127.0.0.1:8000/data");
+            const data = await response.json();
+            
+            let table = "<table border='1'><tr><th>ID</th><th>Name</th></tr>";
+            data.forEach(row => {
+                table += `<tr><td>${row.ID}</td><td>${row.Name}</td></tr>`;
+            });
+            table += "</table>";
+
+            document.getElementById("data-table").innerHTML = table;
+        }
+        window.onload = fetchData;
+    </script>
+</head>
+<body>
+    <h2>CSV Data Viewer</h2>
+    <div id="data-table">Loading...</div>
+</body>
+</html>
