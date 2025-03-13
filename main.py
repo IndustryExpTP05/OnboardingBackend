@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import get_db
 from models import DataEntry
+import pandas as pd
 
 app = FastAPI()
 
@@ -16,26 +17,48 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# ✅ Health check route
+# ✅ 1️⃣ Health Check Route
 @app.get("/")
 async def root():
     return {"message": "FastAPI is running on Render 🚀"}
 
-# ✅ Check PostgreSQL connection
+# ✅ 2️⃣ Check Database Connection
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
     try:
-        result = await db.execute(select(1))  # SQLAlchemy async SELECT 1
-        return {"database_status": "Connected"}
+        result = await db.execute("SELECT 1")
+        return {"database_status": result.fetchall()}
     except Exception as e:
         return {"error": str(e)}
 
-# ✅ Fetch data from PostgreSQL instead of CSV
-@app.get("/data")
-async def fetch_data(db: AsyncSession = Depends(get_db)):
+# ✅ 3️⃣ Fetch Data from Database
+@app.get("/check-db")
+async def check_db(db: AsyncSession = Depends(get_db)):
     try:
-        result = await db.execute(select(DataEntry))  # Fetch from DB
-        data = result.scalars().all()  # Convert query result to list
-        return [{"ID": entry.ID, "Name": entry.Name} for entry in data]
+        result = await db.execute(select(DataEntry))  # Fetch all records
+        data = result.scalars().all()  # Convert to list
+        return {"database_data": [entry.__dict__ for entry in data]}
+    except Exception as e:
+        return {"error": str(e)}
+
+# ✅ 4️⃣ Insert Sample Data
+@app.post("/add-sample-data")
+async def add_sample_data(db: AsyncSession = Depends(get_db)):
+    try:
+        new_entry = DataEntry(ID=1, Name="Sample Name")
+        db.add(new_entry)
+        await db.commit()
+        return {"message": "Sample data added!"}
+    except Exception as e:
+        return {"error": str(e)}
+
+# ✅ 5️⃣ Fetch Data from CSV (Optional)
+CSV_FILE_PATH = "data/test.csv"
+
+@app.get("/data")
+async def read_csv():
+    try:
+        df = pd.read_csv(CSV_FILE_PATH)
+        return df.to_dict(orient="records")  # Convert to JSON format
     except Exception as e:
         return {"error": str(e)}
