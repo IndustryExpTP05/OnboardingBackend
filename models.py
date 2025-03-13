@@ -4,6 +4,6 @@ from sqlalchemy import Column, Integer, String
 Base = declarative_base()
 
 class DataEntry(Base):
-    __tablename__ = "data_table"
+    __tablename__ = "data_table"  # ✅ Make sure this matches your queries
     ID = Column(Integer, primary_key=True, index=True)
-    Name = Column(String)
+    Name = Column(String, index=True)

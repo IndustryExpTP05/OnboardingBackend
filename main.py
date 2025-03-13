@@ -6,6 +6,8 @@ from sqlalchemy import text
 from database import get_db
 from models import DataEntry
 import pandas as pd
+import asyncio
+from database import create_tables
 
 app = FastAPI()
 
@@ -23,14 +25,21 @@ app.add_middleware(
 async def root():
     return {"message": "FastAPI is running on Render 🚀"}
 
+# ✅ Run database migration at startup
+@app.on_event("startup")
+async def startup_event():
+    await create_tables()
+
 # ✅ 2️⃣ Check Database Connection
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
     try:
-        result = await db.execute(text("SELECT 1"))  # ✅ Use text()
+        result = await db.execute(text("SELECT 1"))
         return {"database_status": result.fetchall()}
     except Exception as e:
-        return {"error": str(e)}
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
+
 
 # ✅ 3️⃣ Fetch Data from Database
 @app.get("/check-db")
