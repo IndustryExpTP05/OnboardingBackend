@@ -5,17 +5,13 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")  # This should be set in Render
 
-# Get the database URL from .env file
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Create the database engine
+# Create the async database engine
 engine = create_async_engine(DATABASE_URL, echo=True)
 
-# Create session factory
-AsyncSessionLocal = sessionmaker(
-    bind=engine, class_=AsyncSession, expire_on_commit=False
-)
+# Create a session factory
+AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 # Dependency to get database session
 async def get_db():
