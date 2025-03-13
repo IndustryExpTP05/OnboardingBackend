@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import text
 from database import get_db
 from models import DataEntry
 import pandas as pd
@@ -26,7 +27,7 @@ async def root():
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
     try:
-        result = await db.execute("SELECT 1")
+        result = await db.execute(text("SELECT 1"))  # ✅ Use text()
         return {"database_status": result.fetchall()}
     except Exception as e:
         return {"error": str(e)}
