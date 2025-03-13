@@ -35,10 +35,10 @@ async def startup_event():
 async def test_db(db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(text("SELECT 1"))
-        return {"database_status": result.fetchall()}
+        status = result.scalar()  # ✅ Convert to a simple value instead of raw query result
+        return {"database_status": f"Success: {status}"}
     except Exception as e:
-        import traceback
-        return {"error": str(e), "traceback": traceback.format_exc()}
+        return {"error": str(e)}
 
 
 # ✅ 3️⃣ Fetch Data from Database
@@ -47,9 +47,12 @@ async def check_db(db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(select(DataEntry))  # Fetch all records
         data = result.scalars().all()  # Convert to list
-        return {"database_data": [entry.__dict__ for entry in data]}
+
+        # ✅ Serialize properly using Pydantic
+        return {"database_data": [ {"ID": entry.ID, "Name": entry.Name} for entry in data ]}
     except Exception as e:
         return {"error": str(e)}
+
 
 # ✅ 4️⃣ Insert Sample Data
 @app.post("/add-sample-data")
