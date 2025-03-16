@@ -49,7 +49,7 @@ async def check_db(db: AsyncSession = Depends(get_db)):
         data = result.scalars().all()  # Convert to list
 
         # ✅ Serialize properly using Pydantic
-        return {"database_data": [ {"ID": entry.ID, "Name": entry.Name} for entry in data ]}
+        return {"database_data": [ {"id": entry.ID, "name": entry.Name} for entry in data ]}
     except Exception as e:
         return {"error": str(e)}
 
@@ -58,7 +58,7 @@ async def check_db(db: AsyncSession = Depends(get_db)):
 @app.post("/add-sample-data")
 async def add_sample_data(db: AsyncSession = Depends(get_db)):
     try:
-        new_entry = DataEntry(ID=1, Name="Sample Name")
+        new_entry = DataEntry(id=1, name="Sample Name")
         db.add(new_entry)
         await db.commit()
         return {"message": "Sample data added!"}
