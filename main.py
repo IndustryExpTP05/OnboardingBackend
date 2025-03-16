@@ -49,7 +49,7 @@ async def check_db(db: AsyncSession = Depends(get_db)):
         data = result.scalars().all()  # Convert to list
 
         # ✅ Serialize properly using Pydantic
-        return {"database_data": [ {"id": entry.ID, "name": entry.Name} for entry in data ]}
+        return {"database_data": [ {"id": entry.id, "name": entry.name} for entry in data ]}
     except Exception as e:
         return {"error": str(e)}
 
