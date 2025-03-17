@@ -8,6 +8,7 @@ from models import DataEntry
 import pandas as pd
 import asyncio
 from database import create_tables
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -54,11 +55,14 @@ async def check_db(db: AsyncSession = Depends(get_db)):
         return {"error": str(e)}
 
 
-# ✅ 4️⃣ Insert Sample Data
+class DataEntrySchema(BaseModel):
+    id: int
+    name: str
+
 @app.post("/add-sample-data")
-async def add_sample_data(db: AsyncSession = Depends(get_db)):
+async def add_sample_data(data: DataEntrySchema, db: AsyncSession = Depends(get_db)):
     try:
-        new_entry = DataEntry(id=1, name="Sample Name")
+        new_entry = DataEntry(id=data.id, name=data.name)  # ✅ Use received ID and Name
         db.add(new_entry)
         await db.commit()
         return {"message": "Sample data added!"}
