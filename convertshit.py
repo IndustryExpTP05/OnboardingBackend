@@ -3,6 +3,7 @@ import pandas as pd
 # Explicitly specify openpyxl
 file_path = "data/Cleaned_Cancer_Data.xlsx"
 df = pd.read_excel(file_path, engine="openpyxl")
+df["Count"] = pd.to_numeric(df["Count"], errors="coerce").fillna(0).astype(int)
 
 # Convert to JSON format
 json_output_path = "data/cancer_data.json"
