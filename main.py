@@ -6,9 +6,9 @@ from sqlalchemy import text
 from database import get_db
 from models import DataEntry
 import pandas as pd
-import asyncio
-from database import create_tables
+import json
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -17,8 +17,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],  # Allows all headers
+    allow_headers=["*"],
 )
 
 # ✅ 1️⃣ Health Check Route
@@ -26,56 +26,44 @@ app.add_middleware(
 async def root():
     return {"message": "FastAPI is running on Render 🚀"}
 
-# ✅ Run database migration at startup
-@app.on_event("startup")
-async def startup_event():
-    await create_tables()
+# ✅ 2️⃣ API Route to Serve Cleaned JSON Data
+@app.get("/cancer-data")
+async def get_cancer_data():
+    try:
+        json_file_path = "data/cancer_data.json"  # ✅ Ensure this file exists
+        with open(json_file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return JSONResponse(content=data)  # ✅ Return JSON data
+    except Exception as e:
+        return {"error": str(e)}
 
-# ✅ 2️⃣ Check Database Connection
+# ✅ 3️⃣ Check Database Connection
 @app.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(text("SELECT 1"))
-        status = result.scalar()  # ✅ Convert to a simple value instead of raw query result
+        status = result.scalar()
         return {"database_status": f"Success: {status}"}
     except Exception as e:
         return {"error": str(e)}
 
-
-# ✅ 3️⃣ Fetch Data from Database
+# ✅ 4️⃣ Fetch Data from Database
 @app.get("/check-db")
 async def check_db(db: AsyncSession = Depends(get_db)):
     try:
         result = await db.execute(select(DataEntry))  # Fetch all records
-        data = result.scalars().all()  # Convert to list
-
-        # ✅ Serialize properly using Pydantic
-        return {"database_data": [ {"id": entry.id, "name": entry.name} for entry in data ]}
+        data = result.scalars().all()
+        return {"database_data": [{"id": entry.id, "name": entry.name} for entry in data]}
     except Exception as e:
         return {"error": str(e)}
 
-
-class DataEntrySchema(BaseModel):
-    id: int
-    name: str
-
-@app.post("/add-sample-data")
-async def add_sample_data(data: DataEntrySchema, db: AsyncSession = Depends(get_db)):
-    try:
-        new_entry = DataEntry(id=data.id, name=data.name)  # ✅ Use received ID and Name
-        db.add(new_entry)
-        await db.commit()
-        return {"message": "Sample data added!"}
-    except Exception as e:
-        return {"error": str(e)}
-
-# ✅ 5️⃣ Fetch Data from CSV (Optional)
+# ✅ 5️⃣ Optional CSV Data Fetch
 CSV_FILE_PATH = "data/test.csv"
 
 @app.get("/data")
 async def read_csv():
     try:
         df = pd.read_csv(CSV_FILE_PATH)
-        return df.to_dict(orient="records")  # Convert to JSON format
+        return df.to_dict(orient="records")
     except Exception as e:
         return {"error": str(e)}
